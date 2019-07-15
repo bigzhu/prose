@@ -1,7 +1,6 @@
 package prose
 
 import (
-	"log"
 	"regexp"
 	"strings"
 	"unicode"
@@ -41,7 +40,7 @@ func doSplit(token string) []*Token {
 		// 拆分单引号圈中的文本: 'big' -> ["'", "big", "'"]
 		if apostropheReg.MatchString(token) {
 
-			log.Printf("满足拆分 %v", token)
+			// log.Printf("满足拆分 %v", token)
 			// 开头引号放前面
 			tokens = addToken(string(token[0]), tokens)
 			// 结尾的'的 放到后面
