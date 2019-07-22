@@ -74,7 +74,8 @@ func doSplit(token string) []*Token {
 			// they'll -> [they, 'll].
 			tokens = addToken(token[:idx], tokens)
 			token = token[idx:]
-		} else if idx := hasAnyIndex(lower, prefixes); idx > -1 {
+
+		} else if idx := hasAnyIndex(lower, prefixes); idx > -1 && len(token) > idx { // 遇到奇怪的字符,类似: ��to… 可能会导致 slice bounds out of range, 所以还要判断一次 token 的 len
 			// by bigzhu: Handle "big/big", "big=big", etc.
 			//
 			// big/big -> [big, /, big].
