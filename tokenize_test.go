@@ -146,20 +146,39 @@ func TestTokenizationTwitter(t *testing.T) {
 		"Mr.", "James", "plays", "basketball", "in", "the", "N.B.A.", ",",
 		"do", "you", "?"}
 	assert.Equal(t, expected, getTokenText(doc))
+
+	doc, _ = makeDoc("ˌˌ kill the last letter")
+	expected = []string{"ˌˌ", "kill", "the", "last", "letter"}
+	assert.Equal(t, expected, getTokenText(doc))
+
+	doc, _ = makeDoc("ˌˌˌ kill the last letter")
+	expected = []string{"ˌˌˌ", "kill", "the", "last", "letter"}
+	assert.Equal(t, expected, getTokenText(doc))
+
+	doc, _ = makeDoc("March. July. March. June. January.")
+	expected = []string{
+		"March", ".", "July", ".", "March", ".", "June", ".", "January", "."}
+	assert.Equal(t, expected, getTokenText(doc))
 }
 
 func BenchmarkTokenization(b *testing.B) {
 	in := readDataFile(filepath.Join(testdata, "sherlock.txt"))
 	text := string(in)
 	for n := 0; n < b.N; n++ {
-		makeDoc(text)
+		_, err := makeDoc(text)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
 func BenchmarkTokenizationSimple(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		for _, s := range getWordBenchData() {
-			makeDoc(s)
+			_, err := makeDoc(s)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }

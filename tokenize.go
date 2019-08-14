@@ -96,7 +96,7 @@ func (t *iterTokenizer) tokenize(text string) []*Token {
 	tokens := []*Token{}
 
 	clean, white := sanitizer.Replace(text), false
-	length := utf8.RuneCountInString(clean) + 1
+	length := len(clean)
 
 	start, index := 0, 0
 	cache := map[string][]*Token{}
@@ -141,7 +141,7 @@ func (t *iterTokenizer) tokenize(text string) []*Token {
 	return tokens
 }
 
-var internalRE = regexp.MustCompile(`^(?:[A-Za-z]\.){2,}$|^[A-Z][a-z]{1,3}\.$`)
+var internalRE = regexp.MustCompile(`^(?:[A-Za-z]\.){2,}$|^[A-Z][a-z]{1,2}\.$`)
 var sanitizer = strings.NewReplacer(
 	"……", "… …", // 两个连续的省略符号会导致程序崩溃, 只有在这里替换分开
 	"\u201c", `"`,
