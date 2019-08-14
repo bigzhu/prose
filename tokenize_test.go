@@ -183,7 +183,7 @@ func BenchmarkTokenizationSimple(b *testing.B) {
 	}
 }
 func TestBigzhu(t *testing.T) {
-	text := `'No'.`
+	text := `No.`
 
 	doc, err := NewDocument(text)
 	if err != nil {
