@@ -34,12 +34,13 @@ func doSplit(token string) []*Token {
 	tokens := []*Token{}
 	suffs := []*Token{}
 	apostropheReg := regexp.MustCompile(`^'\S+'$`)
+	prefixHyphenReg := regexp.MustCompile(`^-\S+$`)
+	suffixHyphenReg := regexp.MustCompile(`^\S+-$`)
 
 	last := 0
 	for token != "" && utf8.RuneCountInString(token) != last {
 		// 拆分单引号圈中的文本: 'big' -> ["'", "big", "'"]
 		if apostropheReg.MatchString(token) {
-
 			// log.Printf("满足拆分 %v", token)
 			// 开头引号放前面
 			tokens = addToken(string(token[0]), tokens)
@@ -48,6 +49,19 @@ func doSplit(token string) []*Token {
 				{Text: string(token[len(token)-1])}},
 				suffs...)
 			token = token[1 : len(token)-1]
+		}
+		// 拆分前后有 - 的
+		// big- -> ["big", "-"]
+		// -big -> ["-", "big"]
+		if prefixHyphenReg.MatchString(token) {
+			tokens = addToken(string(token[0]), tokens)
+			token = token[1:len(token)]
+		}
+		if suffixHyphenReg.MatchString(token) {
+			suffs = append([]*Token{
+				{Text: string(token[len(token)-1])}},
+				suffs...)
+			token = token[0 : len(token)-1]
 		}
 
 		if isSpecial(token) {
