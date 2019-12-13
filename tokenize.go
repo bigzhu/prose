@@ -161,6 +161,7 @@ var sanitizer = strings.NewReplacer(
 	"\u201c", `"`,
 	"\u201d", `"`,
 	"\u2018", "'",
+	"—", "-",
 	"\u2019", "'",
 	"&rsquo;", "'")
 var suffixes = []string{",", ")", `"`, "]", "!", ";", ".", "?", ":", "=", "/"}
