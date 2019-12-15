@@ -38,6 +38,7 @@ func doSplit(token string) []*Token {
 	suffixHyphenReg := regexp.MustCompile(`^\S+\W$`)
 	beginHyphenReg := regexp.MustCompile(`^\W+`)
 	endHyphenReg := regexp.MustCompile(`\W+$`)
+	beginSingleQuoteReg := regexp.MustCompile(`^'\S+$`)
 
 	last := 0
 	for token != "" && utf8.RuneCountInString(token) != last {
@@ -55,7 +56,8 @@ func doSplit(token string) []*Token {
 		// 拆分前后有 - 的
 		// big- -> ["big", "-"]
 		// -big -> ["-", "big"]
-		if prefixHyphenReg.MatchString(token) {
+		// 不要拆分 I'm 中的  'm
+		if prefixHyphenReg.MatchString(token) && !beginSingleQuoteReg.MatchString(token) {
 			hyphen := beginHyphenReg.FindString(token)
 			i := len(hyphen)
 			if i > 0 {

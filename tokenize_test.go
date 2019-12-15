@@ -186,7 +186,7 @@ func TestBigzhu(t *testing.T) {
 	//text := `self-assured`
 	// text := `fuck—`
 	text := `fuck---- ----big self--assured march... march...... fly…………cry`
-	// text := `fuck--`
+	//text := `I'm`
 
 	doc, err := NewDocument(text)
 	if err != nil {
