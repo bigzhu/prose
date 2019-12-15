@@ -43,42 +43,6 @@ func doSplit(token string) []*Token {
 
 	last := 0
 	for token != "" && utf8.RuneCountInString(token) != last {
-		if noneWordReg.MatchString(token) {
-			// 拆分单引号圈中的文本: 'big' -> ["'", "big", "'"]
-			if apostropheReg.MatchString(token) {
-				// log.Printf("满足拆分 %v", token)
-				// 开头引号放前面
-				tokens = addToken(string(token[0]), tokens)
-				// 结尾的'的 放到后面
-				suffs = append([]*Token{
-					{Text: string(token[len(token)-1])}},
-					suffs...)
-				token = token[1 : len(token)-1]
-			}
-			// 拆分前后有 - 的
-			// big- -> ["big", "-"]
-			// -big -> ["-", "big"]
-			// 不要拆分 I'm 中的  'm
-			if prefixHyphenReg.MatchString(token) && !beginSingleQuoteReg.MatchString(token) {
-				hyphen := beginHyphenReg.FindString(token)
-				i := len(hyphen)
-				if i > 0 {
-					tokens = addToken(token[0:i], tokens)
-					token = token[i:len(token)]
-				}
-			}
-			if suffixHyphenReg.MatchString(token) {
-				iList := endHyphenReg.FindStringIndex(token)
-				if len(iList) > 0 {
-					i := iList[0]
-					suffs = append([]*Token{
-						{Text: string(token[i:])}},
-						suffs...)
-					token = token[0:i]
-				}
-			}
-		}
-
 		if isSpecial(token) {
 			// We've found a special case (e.g., an emoticon) -- so, we add it as a token without
 			// any further processing.
@@ -87,31 +51,41 @@ func doSplit(token string) []*Token {
 		}
 		last = utf8.RuneCountInString(token)
 		lower := strings.ToLower(token)
-		if hasAnyPrefix(token, prefixes) {
-			// Remove prefixes -- e.g., $100 -> [$, 100].
-			tokens = addToken(string(token[0]), tokens)
-			token = token[1:]
-		} else if hasAnySuffix(token, suffixes) {
-			// Remove suffixes -- e.g., Well) -> [Well, )].
-			suffs = append([]*Token{
-				{Text: string(token[len(token)-1])}},
-				suffs...)
-			token = token[:len(token)-1]
-		} else if idx := hasAnyIndex(lower, []string{"'ll", "'s", "'re", "'m", "'d", "'ve", "n't"}); idx > -1 {
-			// Handle "they'll", "I'll", etc.
-			//
-			// they'll -> [they, 'll].
-			tokens = addToken(token[:idx], tokens)
-			token = token[idx:]
-
-		} else if idx := hasAnyIndex(lower, prefixes); idx > -1 && len(token) > idx { // 遇到奇怪的字符,类似: ��to… 可能会导致 slice bounds out of range, 所以还要判断一次 token 的 len
-			// by bigzhu: Handle "big/big", "big=big", etc.
-			//
-			// big/big -> [big, /, big].
-			// you'd -> [you, 'd]
-			// must in prefixes
-			tokens = addToken(token[:idx], tokens)
-			token = token[idx:]
+		if noneWordReg.MatchString(token) {
+			// 前后都有单引号, 拆开 'big' -> ["'", "big", "'"]
+			if apostropheReg.MatchString(token) {
+				tokens = addToken(string(token[0]), tokens)
+				// 结尾的'的 放到后面
+				suffs = append([]*Token{
+					{Text: string(token[len(token)-1])}},
+					suffs...)
+				token = token[1 : len(token)-1]
+			} else if suffixHyphenReg.MatchString(token) {
+				// 单纯后面有非字母的 big- -> ["big", "-"]
+				iList := endHyphenReg.FindStringIndex(token)
+				if len(iList) > 0 {
+					i := iList[0]
+					suffs = append([]*Token{
+						{Text: string(token[i:])}},
+						suffs...)
+					token = token[0:i]
+				}
+			} else if prefixHyphenReg.MatchString(token) && !beginSingleQuoteReg.MatchString(token) {
+				//前面有非字母的拆开, 前面只有一个单引号的可能是缩写, 不要动 -big -> ["-", "big"]
+				hyphen := beginHyphenReg.FindString(token)
+				i := len(hyphen)
+				if i > 0 {
+					tokens = addToken(token[0:i], tokens)
+					token = token[i:len(token)]
+				}
+			} else if idx := hasAnyIndex(lower, []string{"'ll", "'s", "'re", "'m", "'d", "'ve", "n't"}); idx > -1 {
+				// 满足缩写词的拆开 they'll -> [they, 'll].
+				tokens = addToken(token[:idx], tokens)
+				token = token[idx:]
+			} else {
+				// 文字中间有非字母字符保持不动 bigzhu.com
+				tokens = addToken(token, tokens)
+			}
 		} else {
 			tokens = addToken(token, tokens)
 		}
@@ -170,7 +144,7 @@ func (t *iterTokenizer) tokenize(text string) []*Token {
 	return tokens
 }
 
-var internalRE = regexp.MustCompile(`^(?:[A-Za-z]\.){2,}$|^[A-Z][a-z]{1,2}\.$`)
+//var internalRE = regexp.MustCompile(`^(?:[A-Za-z]\.){2,}$|^[A-Z][a-z]{1,2}\.$`)
 var sanitizer = strings.NewReplacer(
 	//"……", "… …", // 两个连续的省略符号会导致程序崩溃, 只有在这里替换分开
 	"\u201c", `"`,
@@ -180,8 +154,9 @@ var sanitizer = strings.NewReplacer(
 	"…", "...",
 	"\u2019", "'",
 	"&rsquo;", "'")
-var suffixes = []string{",", ")", `"`, "]", "!", ";", ".", "?", ":", "=", "/"}
-var prefixes = []string{"$", "(", `"`, "[", "=", "/", ";", "..."}
+
+//var suffixes = []string{}
+//var prefixes = []string{}
 
 var emoticons = map[string]int{
 	"(-8":         1,
