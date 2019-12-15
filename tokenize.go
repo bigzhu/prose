@@ -34,10 +34,10 @@ func doSplit(token string) []*Token {
 	tokens := []*Token{}
 	suffs := []*Token{}
 	apostropheReg := regexp.MustCompile(`^'\S+'$`)
-	prefixHyphenReg := regexp.MustCompile(`^-\S+$`)
-	suffixHyphenReg := regexp.MustCompile(`^\S+-$`)
-	beginHyphenReg := regexp.MustCompile(`^-+`)
-	endHyphenReg := regexp.MustCompile(`-+$`)
+	prefixHyphenReg := regexp.MustCompile(`^\W\S+$`)
+	suffixHyphenReg := regexp.MustCompile(`^\S+\W$`)
+	beginHyphenReg := regexp.MustCompile(`^\W+`)
+	endHyphenReg := regexp.MustCompile(`\W+$`)
 
 	last := 0
 	for token != "" && utf8.RuneCountInString(token) != last {
@@ -167,15 +167,16 @@ func (t *iterTokenizer) tokenize(text string) []*Token {
 
 var internalRE = regexp.MustCompile(`^(?:[A-Za-z]\.){2,}$|^[A-Z][a-z]{1,2}\.$`)
 var sanitizer = strings.NewReplacer(
-	"……", "… …", // 两个连续的省略符号会导致程序崩溃, 只有在这里替换分开
+	//"……", "… …", // 两个连续的省略符号会导致程序崩溃, 只有在这里替换分开
 	"\u201c", `"`,
 	"\u201d", `"`,
 	"\u2018", "'",
 	"—", "-",
+	"…", "...",
 	"\u2019", "'",
 	"&rsquo;", "'")
 var suffixes = []string{",", ")", `"`, "]", "!", ";", ".", "?", ":", "=", "/"}
-var prefixes = []string{"$", "(", `"`, "[", "=", "/", ";", "…"}
+var prefixes = []string{"$", "(", `"`, "[", "=", "/", ";", "..."}
 
 var emoticons = map[string]int{
 	"(-8":         1,
