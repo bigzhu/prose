@@ -39,40 +39,43 @@ func doSplit(token string) []*Token {
 	beginHyphenReg := regexp.MustCompile(`^\W+`)
 	endHyphenReg := regexp.MustCompile(`\W+$`)
 	beginSingleQuoteReg := regexp.MustCompile(`^'\S+$`)
+	noneWordReg := regexp.MustCompile(`\W`)
 
 	last := 0
 	for token != "" && utf8.RuneCountInString(token) != last {
-		// 拆分单引号圈中的文本: 'big' -> ["'", "big", "'"]
-		if apostropheReg.MatchString(token) {
-			// log.Printf("满足拆分 %v", token)
-			// 开头引号放前面
-			tokens = addToken(string(token[0]), tokens)
-			// 结尾的'的 放到后面
-			suffs = append([]*Token{
-				{Text: string(token[len(token)-1])}},
-				suffs...)
-			token = token[1 : len(token)-1]
-		}
-		// 拆分前后有 - 的
-		// big- -> ["big", "-"]
-		// -big -> ["-", "big"]
-		// 不要拆分 I'm 中的  'm
-		if prefixHyphenReg.MatchString(token) && !beginSingleQuoteReg.MatchString(token) {
-			hyphen := beginHyphenReg.FindString(token)
-			i := len(hyphen)
-			if i > 0 {
-				tokens = addToken(token[0:i], tokens)
-				token = token[i:len(token)]
-			}
-		}
-		if suffixHyphenReg.MatchString(token) {
-			iList := endHyphenReg.FindStringIndex(token)
-			if len(iList) > 0 {
-				i := iList[0]
+		if noneWordReg.MatchString(token) {
+			// 拆分单引号圈中的文本: 'big' -> ["'", "big", "'"]
+			if apostropheReg.MatchString(token) {
+				// log.Printf("满足拆分 %v", token)
+				// 开头引号放前面
+				tokens = addToken(string(token[0]), tokens)
+				// 结尾的'的 放到后面
 				suffs = append([]*Token{
-					{Text: string(token[i:])}},
+					{Text: string(token[len(token)-1])}},
 					suffs...)
-				token = token[0:i]
+				token = token[1 : len(token)-1]
+			}
+			// 拆分前后有 - 的
+			// big- -> ["big", "-"]
+			// -big -> ["-", "big"]
+			// 不要拆分 I'm 中的  'm
+			if prefixHyphenReg.MatchString(token) && !beginSingleQuoteReg.MatchString(token) {
+				hyphen := beginHyphenReg.FindString(token)
+				i := len(hyphen)
+				if i > 0 {
+					tokens = addToken(token[0:i], tokens)
+					token = token[i:len(token)]
+				}
+			}
+			if suffixHyphenReg.MatchString(token) {
+				iList := endHyphenReg.FindStringIndex(token)
+				if len(iList) > 0 {
+					i := iList[0]
+					suffs = append([]*Token{
+						{Text: string(token[i:])}},
+						suffs...)
+					token = token[0:i]
+				}
 			}
 		}
 
