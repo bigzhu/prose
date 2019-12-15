@@ -36,6 +36,8 @@ func doSplit(token string) []*Token {
 	apostropheReg := regexp.MustCompile(`^'\S+'$`)
 	prefixHyphenReg := regexp.MustCompile(`^-\S+$`)
 	suffixHyphenReg := regexp.MustCompile(`^\S+-$`)
+	beginHyphenReg := regexp.MustCompile(`^-+`)
+	endHyphenReg := regexp.MustCompile(`-+$`)
 
 	last := 0
 	for token != "" && utf8.RuneCountInString(token) != last {
@@ -54,14 +56,22 @@ func doSplit(token string) []*Token {
 		// big- -> ["big", "-"]
 		// -big -> ["-", "big"]
 		if prefixHyphenReg.MatchString(token) {
-			tokens = addToken(string(token[0]), tokens)
-			token = token[1:len(token)]
+			hyphen := beginHyphenReg.FindString(token)
+			i := len(hyphen)
+			if i > 0 {
+				tokens = addToken(token[0:i], tokens)
+				token = token[i:len(token)]
+			}
 		}
 		if suffixHyphenReg.MatchString(token) {
-			suffs = append([]*Token{
-				{Text: string(token[len(token)-1])}},
-				suffs...)
-			token = token[0 : len(token)-1]
+			iList := endHyphenReg.FindStringIndex(token)
+			if len(iList) > 0 {
+				i := iList[0]
+				suffs = append([]*Token{
+					{Text: string(token[i:])}},
+					suffs...)
+				token = token[0:i]
+			}
 		}
 
 		if isSpecial(token) {
