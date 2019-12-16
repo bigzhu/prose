@@ -1,11 +1,14 @@
 package prose
 
 import (
+	"log"
 	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
+
+var notSplitSingleQuote = []string{"'ll", "'s", "'re", "'m", "'d", "'ve", "n't"}
 
 // iterTokenizer splits a sentence into words.
 type iterTokenizer struct {
@@ -33,12 +36,12 @@ func isSpecial(token string) bool {
 func doSplit(token string) []*Token {
 	tokens := []*Token{}
 	suffs := []*Token{}
-	apostropheReg := regexp.MustCompile(`^'\S+'$`)
+	//apostropheReg := regexp.MustCompile(`^'\S+'$`)
 	prefixHyphenReg := regexp.MustCompile(`^\W\S+$`)
 	suffixHyphenReg := regexp.MustCompile(`^\S+\W$`)
 	beginHyphenReg := regexp.MustCompile(`^\W+`)
 	endHyphenReg := regexp.MustCompile(`\W+$`)
-	beginSingleQuoteReg := regexp.MustCompile(`^'\S+$`)
+	//beginSingleQuoteReg := regexp.MustCompile(`^'\S+$`)
 	noneWordReg := regexp.MustCompile(`\W`)
 
 	last := 0
@@ -52,15 +55,7 @@ func doSplit(token string) []*Token {
 		last = utf8.RuneCountInString(token)
 		lower := strings.ToLower(token)
 		if noneWordReg.MatchString(token) {
-			// 前后都有单引号, 拆开 'big' -> ["'", "big", "'"]
-			if apostropheReg.MatchString(token) {
-				tokens = addToken(string(token[0]), tokens)
-				// 结尾的'的 放到后面
-				suffs = append([]*Token{
-					{Text: string(token[len(token)-1])}},
-					suffs...)
-				token = token[1 : len(token)-1]
-			} else if suffixHyphenReg.MatchString(token) {
+			if suffixHyphenReg.MatchString(token) {
 				// 单纯后面有非字母的 big- -> ["big", "-"]
 				iList := endHyphenReg.FindStringIndex(token)
 				if len(iList) > 0 {
@@ -70,15 +65,16 @@ func doSplit(token string) []*Token {
 						suffs...)
 					token = token[0:i]
 				}
-			} else if prefixHyphenReg.MatchString(token) && !beginSingleQuoteReg.MatchString(token) {
-				//前面有非字母的拆开, 前面只有一个单引号的可能是缩写, 不要动 -big -> ["-", "big"]
+			} else if prefixHyphenReg.MatchString(token) && !stringInSlice(lower, notSplitSingleQuote) {
+				log.Println("fuck:" + lower)
+				//前面有非字母的拆开, 满足单词缩写的这里不要拆, 由后面的去处理
 				hyphen := beginHyphenReg.FindString(token)
 				i := len(hyphen)
 				if i > 0 {
 					tokens = addToken(token[0:i], tokens)
 					token = token[i:len(token)]
 				}
-			} else if idx := hasAnyIndex(lower, []string{"'ll", "'s", "'re", "'m", "'d", "'ve", "n't"}); idx > -1 {
+			} else if idx := hasAnyIndex(lower, notSplitSingleQuote); idx > -1 {
 				// 满足缩写词的拆开 they'll -> [they, 'll].
 				tokens = addToken(token[:idx], tokens)
 				token = token[idx:]
