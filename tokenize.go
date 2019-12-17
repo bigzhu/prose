@@ -1,7 +1,6 @@
 package prose
 
 import (
-	"log"
 	"regexp"
 	"strings"
 	"unicode"
@@ -66,7 +65,6 @@ func doSplit(token string) []*Token {
 					token = token[0:i]
 				}
 			} else if prefixHyphenReg.MatchString(token) && !stringInSlice(lower, notSplitSingleQuote) {
-				log.Println("fuck:" + lower)
 				//前面有非字母的拆开, 满足单词缩写的这里不要拆, 由后面的去处理
 				hyphen := beginHyphenReg.FindString(token)
 				i := len(hyphen)
