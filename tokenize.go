@@ -9,6 +9,9 @@ import (
 
 var notSplitSingleQuote = []string{"'ll", "'s", "'re", "'m", "'d", "'ve", "n't"}
 
+// some need spilt
+var needsplitJoiner = []string{"...", "="}
+
 // iterTokenizer splits a sentence into words.
 type iterTokenizer struct {
 }
@@ -74,6 +77,9 @@ func doSplit(token string) []*Token {
 				}
 			} else if idx := hasAnyIndex(lower, notSplitSingleQuote); idx > -1 {
 				// 满足缩写词的拆开 they'll -> [they, 'll].
+				tokens = addToken(token[:idx], tokens)
+				token = token[idx:]
+			} else if idx := hasAnyIndex(lower, needsplitJoiner); idx > -1 {
 				tokens = addToken(token[:idx], tokens)
 				token = token[idx:]
 			} else {
