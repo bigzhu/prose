@@ -10,7 +10,8 @@ import (
 var notSplitSingleQuote = []string{"'ll", "'s", "'re", "'m", "'d", "'ve", "n't"}
 
 // some need spilt
-var needsplitJoiner = []string{"...", "="}
+var needsplitJoiner = []string{"...", "--"}
+var noNeedsplitJoiner = []string{"-", ".", "'"}
 
 // iterTokenizer splits a sentence into words.
 type iterTokenizer struct {
@@ -28,6 +29,16 @@ func addToken(s string, toks []*Token) []*Token {
 	return toks
 }
 
+// check
+func checkIsNeedSplitMiddle(lower string) bool {
+	if hasAnyIndex(lower, needsplitJoiner) != -1 {
+		return true
+	}
+	if hasAnyIndex(lower, noNeedsplitJoiner) != -1 {
+		return false
+	}
+	return true
+}
 func isSpecial(token string) bool {
 	_, found := emoticons[token]
 	// return found || internalRE.MatchString(token)
@@ -42,6 +53,7 @@ func doSplit(token string) []*Token {
 	prefixHyphenReg := regexp.MustCompile(`^\W\S+$`)
 	suffixHyphenReg := regexp.MustCompile(`^\S+\W$`)
 	beginHyphenReg := regexp.MustCompile(`^\W+`)
+	middleHyphenReg := regexp.MustCompile(`\W+`)
 	endHyphenReg := regexp.MustCompile(`\W+$`)
 	//beginSingleQuoteReg := regexp.MustCompile(`^'\S+$`)
 	noneWordReg := regexp.MustCompile(`\W`)
@@ -79,7 +91,7 @@ func doSplit(token string) []*Token {
 				// 满足缩写词的拆开 they'll -> [they, 'll].
 				tokens = addToken(token[:idx], tokens)
 				token = token[idx:]
-			} else if idx := hasAnyIndex(lower, needsplitJoiner); idx > -1 {
+			} else if idx := middleHyphenReg.FindStringIndex(lower)[0]; idx > -1 && checkIsNeedSplitMiddle(lower) {
 				tokens = addToken(token[:idx], tokens)
 				token = token[idx:]
 			} else {

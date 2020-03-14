@@ -1432,7 +1432,7 @@ func BenchmarkTokenizationSimple(b *testing.B) {
 func TestBigzhu(t *testing.T) {
 	//text := `self-assured`
 	// text := `fuck—`
-	text := `bigzhu=zhu bigzhu.com fuck----hah ----big self--assured march... march...... fly…………cry 'fuck so what' I'm your're don't  buy he's wife `
+	text := `big:zhu bigzhu/hah bigzhu=zhu bigzhu.com fuck----hah ----big self--assured march...march...... fly…………cry 'fuck so what' I'm your're don't  buy he's wife `
 	//text = `understand...it's`
 	// text := `-----fuck`
 	// text := `I'm`
