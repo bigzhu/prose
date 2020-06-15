@@ -1,6 +1,7 @@
 package prose
 
 import (
+	//"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -69,8 +70,7 @@ func doSplit(token string) []*Token {
 		last = utf8.RuneCountInString(token)
 		lower := strings.ToLower(token)
 		if noneWordReg.MatchString(token) {
-			if suffixHyphenReg.MatchString(token) {
-				// 单纯后面有非字母的 big- -> ["big", "-"]
+			if suffixHyphenReg.MatchString(token) { // 单纯后面有非字母的 big- -> ["big", "-"]
 				iList := endHyphenReg.FindStringIndex(token)
 				if len(iList) > 0 {
 					i := iList[0]
@@ -87,16 +87,18 @@ func doSplit(token string) []*Token {
 					tokens = addToken(token[0:i], tokens)
 					token = token[i:len(token)]
 				}
-			} else if idx := hasAnyIndex(lower, notSplitSingleQuote); idx > -1 {
-				// 满足缩写词的拆开 they'll -> [they, 'll].
+			} else if idx := hasAnyIndex(lower, notSplitSingleQuote); idx > -1 { // 满足缩写词的拆开 they'll -> [they, 'll].
 				tokens = addToken(token[:idx], tokens)
 				token = token[idx:]
-			} else if idx := middleHyphenReg.FindStringIndex(lower)[0]; idx > -1 && checkIsNeedSplitMiddle(lower) {
+			} else if idx := middleHyphenReg.FindStringIndex(lower)[0]; idx > -1 && checkIsNeedSplitMiddle(lower) && len(lower) > 1 { // bigzhu/hah -> [bigzhu, /,hah]
 				tokens = addToken(token[:idx], tokens)
 				token = token[idx:]
+				//fmt.Println(token)
+				//fmt.Println(tokens)
 			} else {
 				// 文字中间有非字母字符保持不动 bigzhu.com
 				tokens = addToken(token, tokens)
+
 			}
 		} else {
 			tokens = addToken(token, tokens)
