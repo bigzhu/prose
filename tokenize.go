@@ -31,7 +31,7 @@ func addToken(s string, toks []*Token) []*Token {
 func checkIsNeedSplitMiddle(noneWord string) bool {
 	//if hasAnyIndex(lower, noNeedsplitJoiner) != -1 {
 	//if noneWord == `'` || noneWord == `-` || noneWord == `.` {
-	if noneWord == `'` {
+	if noneWord == `'` || noneWord == `.` {
 		return false
 	}
 	return true
