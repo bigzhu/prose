@@ -1,7 +1,6 @@
 package prose
 
 import (
-	//"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -10,8 +9,6 @@ import (
 
 var notSplitSingleQuote = []string{"'ll", "'s", "'re", "'m", "'d", "'ve", "n't"}
 
-// some need spilt
-var needsplitJoiner = []string{"...", "--"}
 var noNeedsplitJoiner = []string{"-", ".", "'"}
 
 // iterTokenizer splits a sentence into words.
@@ -31,11 +28,10 @@ func addToken(s string, toks []*Token) []*Token {
 }
 
 // check
-func checkIsNeedSplitMiddle(lower string) bool {
-	if hasAnyIndex(lower, needsplitJoiner) != -1 {
-		return true
-	}
-	if hasAnyIndex(lower, noNeedsplitJoiner) != -1 {
+func checkIsNeedSplitMiddle(noneWord string) bool {
+	//if hasAnyIndex(lower, noNeedsplitJoiner) != -1 {
+	//if noneWord == `'` || noneWord == `-` || noneWord == `.` {
+	if noneWord == `'` {
 		return false
 	}
 	return true
@@ -50,7 +46,6 @@ func isSpecial(token string) bool {
 func doSplit(token string) []*Token {
 	tokens := []*Token{}
 	suffs := []*Token{}
-	//apostropheReg := regexp.MustCompile(`^'\S+'$`)
 	prefixHyphenReg := regexp.MustCompile(`^\W\S+$`)
 	suffixHyphenReg := regexp.MustCompile(`^\S+\W$`)
 	beginHyphenReg := regexp.MustCompile(`^\W+`)
@@ -87,18 +82,15 @@ func doSplit(token string) []*Token {
 					tokens = addToken(token[0:i], tokens)
 					token = token[i:len(token)]
 				}
+			} else if idx := middleHyphenReg.FindStringIndex(lower)[0]; idx > -1 && checkIsNeedSplitMiddle(string(token[idx])) && len(lower) > 1 { // bigzhu/hah -> [bigzhu, /,hah]
+				tokens = addToken(token[:idx], tokens)
+				token = token[idx:]
 			} else if idx := hasAnyIndex(lower, notSplitSingleQuote); idx > -1 { // 满足缩写词的拆开 they'll -> [they, 'll].
 				tokens = addToken(token[:idx], tokens)
 				token = token[idx:]
-			} else if idx := middleHyphenReg.FindStringIndex(lower)[0]; idx > -1 && checkIsNeedSplitMiddle(lower) && len(lower) > 1 { // bigzhu/hah -> [bigzhu, /,hah]
-				tokens = addToken(token[:idx], tokens)
-				token = token[idx:]
-				//fmt.Println(token)
-				//fmt.Println(tokens)
 			} else {
 				// 文字中间有非字母字符保持不动 bigzhu.com
 				tokens = addToken(token, tokens)
-
 			}
 		} else {
 			tokens = addToken(token, tokens)
@@ -119,7 +111,6 @@ func (t *iterTokenizer) tokenize(text string) []*Token {
 	cache := map[string][]*Token{}
 	for index <= length {
 		uc, size := utf8.DecodeRuneInString(clean[index:])
-		// log.Printf("index=%v, size=%v, unicode=%v isspace=%v", index, size, uc, unicode.IsSpace(uc))
 
 		if size == 0 {
 			break
